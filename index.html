@@ -76,9 +76,39 @@
       letter-spacing: 0.4px;
     }
 
-    .size-spinbox input[type="number"] {
+    .spin-control {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       width: 100%;
-      padding: 10px;
+    }
+
+    .spin-btn {
+      flex-shrink: 0;
+      width: 44px;
+      height: 48px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 1.6rem;
+      font-weight: 400;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      user-select: none;
+    }
+
+    .spin-btn:hover { border-color: #6366f1; background: #eef2ff; color: #6366f1; }
+    .spin-btn:active { transform: scale(0.93); }
+
+    .size-spinbox input[type="number"] {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 4px;
       border: 2px solid #e2e8f0;
       border-radius: 10px;
       font-size: 1.2rem;
@@ -87,7 +117,13 @@
       text-align: center;
       outline: none;
       transition: border-color 0.15s;
+      -webkit-appearance: none;
+      -moz-appearance: textfield;
+      appearance: textfield;
     }
+
+    .size-spinbox input[type="number"]::-webkit-outer-spin-button,
+    .size-spinbox input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
     .size-spinbox input[type="number"]:focus { border-color: #6366f1; }
 
@@ -853,12 +889,20 @@
       <div class="grid-size-row">
         <div class="size-spinbox">
           <span>Rows</span>
-          <input type="number" id="rows-input" min="2" max="10" value="5">
+          <div class="spin-control">
+            <button class="spin-btn" data-target="rows-input" data-delta="-1">−</button>
+            <input type="number" id="rows-input" min="2" max="10" value="5">
+            <button class="spin-btn" data-target="rows-input" data-delta="1">+</button>
+          </div>
         </div>
         <div class="grid-size-sep">×</div>
         <div class="size-spinbox">
           <span>Columns</span>
-          <input type="number" id="cols-input" min="2" max="10" value="6">
+          <div class="spin-control">
+            <button class="spin-btn" data-target="cols-input" data-delta="-1">−</button>
+            <input type="number" id="cols-input" min="2" max="10" value="6">
+            <button class="spin-btn" data-target="cols-input" data-delta="1">+</button>
+          </div>
         </div>
       </div>
       <div class="grid-preview" id="grid-preview">Grid: 5 × 6 = 30 numbers (1 – 30)</div>
@@ -1211,6 +1255,16 @@
 
     document.getElementById('rows-input').addEventListener('input', updateGridPreview);
     document.getElementById('cols-input').addEventListener('input', updateGridPreview);
+
+    document.querySelectorAll('.spin-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.target);
+        const delta = +btn.dataset.delta;
+        const min = +input.min, max = +input.max;
+        input.value = clamp((+input.value || 0) + delta, min, max);
+        updateGridPreview();
+      });
+    });
 
     let selectedMode = 'pvp';
 
