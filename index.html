@@ -359,7 +359,7 @@
     .banner-text { flex: 1; min-width: 0; }
 
     .banner-action {
-      font-size: 0.75rem;
+      font-size: 1rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.4px;
@@ -371,8 +371,8 @@
     .phase-collecting-p2 .banner-action { color: #fdba74; }
 
     .banner-detail { font-size: 0.9rem; font-weight: 600; color: #fff; }
-    .banner-tally { font-size: 0.8rem; color: #94a3b8; margin-top: 2px; }
-    .banner-error { font-size: 0.85rem; font-weight: 600; color: #fbbf24; margin-top: 4px; }
+    .banner-tally { font-size: 0.92rem; color: #94a3b8; margin-top: 2px; }
+    .banner-error { font-size: 0.95rem; font-weight: 600; color: #fbbf24; margin-top: 4px; }
 
     .commit-btn {
       padding: 10px 20px;
@@ -635,9 +635,22 @@
     }
 
     [hidden] { display: none !important; }
+
+    .music-btn {
+      position: fixed; top: 12px; right: 12px;
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1); color: #fff;
+      font-size: 1.1rem; cursor: pointer; z-index: 100;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .music-btn:hover { background: rgba(255,255,255,0.2); }
+    .music-btn.muted { opacity: 0.35; }
   </style>
 </head>
 <body>
+
+  <button id="music-toggle-btn" class="music-btn" title="Toggle music">♪</button>
 
   <h1>Factor Game</h1>
   <p class="subtitle">Choose numbers. Collect factors. Outscore your opponent.</p>
@@ -997,6 +1010,8 @@
         badge.hidden = true;
       }
 
+      stopHomeMusic();
+
       document.getElementById('setup-screen').hidden = true;
       document.getElementById('game-screen').hidden = false;
       document.getElementById('result-overlay').hidden = true;
@@ -1082,7 +1097,6 @@
         setTimeout(() => {
           state.selectedFactors = computeAICollect();
           state.busy = false;
-          if (state.selectedFactors.size > 0) celebrateAvatar(1);
           renderGrid();
           renderBanner();
           setTimeout(() => commitCollecting(), 1200);
@@ -1103,7 +1117,6 @@
           state.selectedFactors.delete(n);
         } else {
           state.selectedFactors.add(n);
-          celebrateAvatar(state.collector); // celebrate finding a correct factor
         }
         renderGrid();
         renderBanner();
@@ -1135,6 +1148,8 @@
       } else {
         state.log[0] = state.log[0].replace(/selects factors…$/, `collected nothing.`);
       }
+
+      if (taken.length > 0) celebrateAvatar(collector);
 
       state.phase = 'picking';
       state.lastPicked = null;
@@ -1221,6 +1236,7 @@
           });
         } else if (state.questLevel >= 10) {
           // Conquered all 10 levels!
+          playJingle(WIN_JINGLE);
           icon.textContent = '👑';
           badge.textContent = 'Quest Complete!';
           badge.hidden = false;
@@ -1238,6 +1254,7 @@
           });
         } else {
           // Level cleared — advance
+          playJingle(LEVELUP_JINGLE);
           const nextLvl = state.questLevel + 1;
           const nextGrid = QUEST_LEVELS[nextLvl - 1];
           icon.textContent = '⭐';
@@ -1267,6 +1284,7 @@
         } else {
           const winner = s0 > s1 ? n0 : n1;
           const diff = Math.abs(s0 - s1);
+          playJingle(WIN_JINGLE);
           icon.textContent = '🏆';
           title.textContent = `${winner} Wins!`;
           sub.textContent = `${winner} wins by ${diff} point${diff !== 1 ? 's' : ''}.`;
@@ -1294,6 +1312,7 @@
       document.getElementById('result-overlay').hidden = true;
       document.getElementById('game-screen').hidden = true;
       document.getElementById('setup-screen').hidden = false;
+      if (musicEnabled) startHomeMusic();
       // Reset mode UI to match current selectedMode
       document.querySelectorAll('#mode-options .option-btn').forEach(b => {
         b.classList.toggle('selected', b.dataset.mode === selectedMode);
@@ -1464,6 +1483,116 @@
     // ── Bottom controls ────────────────────────────────────────────────────────
 
     document.getElementById('new-game-btn').addEventListener('click', () => launchGame());
+
+    // ── Audio System ──────────────────────────────────────────────────────────
+
+    const NOTE = {
+      C3:130.81, F3:174.61, G3:196, C4:261.63, D4:293.66,
+      C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99,
+      A5:880, B5:987.77, C6:1046.5, E6:1318.51, G6:1567.98, R:0
+    };
+    const BPM = 160, b = 60/BPM, e = b/2, h = b*2, s = b/4;
+
+    // 8-bar looping melody (square wave) — 12 s loop at 160 BPM
+    const HOME_MELODY = [
+      [NOTE.C5,e],[NOTE.E5,e],[NOTE.G5,e],[NOTE.E5,e],[NOTE.C5,e],[NOTE.E5,e],[NOTE.G5,e],[NOTE.A5,e],
+      [NOTE.B5,e],[NOTE.A5,e],[NOTE.G5,e],[NOTE.A5,e],[NOTE.G5,e],[NOTE.E5,e],[NOTE.C5,e],[NOTE.R, e],
+      [NOTE.F5,e],[NOTE.A5,e],[NOTE.C6,e],[NOTE.A5,e],[NOTE.F5,e],[NOTE.G5,e],[NOTE.A5,e],[NOTE.B5,e],
+      [NOTE.C6,b],[NOTE.G5,e],[NOTE.E5,e],[NOTE.C5,b],[NOTE.R, e],[NOTE.R, e],
+      [NOTE.G5,e],[NOTE.A5,e],[NOTE.B5,e],[NOTE.A5,e],[NOTE.G5,e],[NOTE.F5,e],[NOTE.E5,e],[NOTE.D5,e],
+      [NOTE.E5,e],[NOTE.C5,e],[NOTE.D5,e],[NOTE.E5,e],[NOTE.F5,b],[NOTE.G5,b],
+      [NOTE.A5,e],[NOTE.G5,e],[NOTE.F5,e],[NOTE.E5,e],[NOTE.D5,e],[NOTE.E5,e],[NOTE.F5,e],[NOTE.G5,e],
+      [NOTE.C5,b],[NOTE.E5,e],[NOTE.G5,e],[NOTE.C6,e],[NOTE.R, e],[NOTE.R, b],
+    ];
+    // Bass line (triangle wave)
+    const HOME_BASS = [
+      [NOTE.C3,h],[NOTE.G3,h],[NOTE.C3,h],[NOTE.G3,h],
+      [NOTE.F3,h],[NOTE.C4,h],[NOTE.C3,h],[NOTE.G3,h],
+      [NOTE.G3,h],[NOTE.D4,h],[NOTE.C3,h],[NOTE.G3,h],
+      [NOTE.F3,h],[NOTE.C4,h],[NOTE.C3,h],[NOTE.G3,h],
+    ];
+    const WIN_JINGLE = [
+      [NOTE.C5,s],[NOTE.E5,s],[NOTE.G5,s],[NOTE.C6,e],[NOTE.R,s],[NOTE.E6,e],[NOTE.G6,b],
+    ];
+    const LEVELUP_JINGLE = [
+      [NOTE.C5,s],[NOTE.D5,s],[NOTE.E5,s],[NOTE.F5,s],[NOTE.G5,s],[NOTE.A5,s],[NOTE.B5,s],[NOTE.C6,e],
+      [NOTE.R,s],[NOTE.E6,s],[NOTE.G6,s],[NOTE.C6,s],[NOTE.E6,b],[NOTE.R,b],
+    ];
+
+    let audioCtx = null, musicEnabled = true, homeMusicTimer = null, activeNodes = [];
+
+    function getCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function stopActiveNodes() {
+      for (const n of activeNodes) { try { n.stop(); } catch(e) {} }
+      activeNodes = [];
+    }
+
+    function scheduleNotes(notes, startTime, oscType, vol) {
+      const ctx = audioCtx;
+      let t = startTime;
+      for (const [freq, dur] of notes) {
+        if (freq > 0) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = oscType;
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(vol, t);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.88);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + dur);
+          activeNodes.push(osc);
+        }
+        t += dur;
+      }
+      return t - startTime;
+    }
+
+    function startHomeMusic() {
+      if (!musicEnabled) return;
+      const ctx = getCtx();
+      activeNodes = [];
+      const now = ctx.currentTime;
+      const dur = scheduleNotes(HOME_MELODY, now, 'square', 0.09);
+      scheduleNotes(HOME_BASS, now, 'triangle', 0.15);
+      homeMusicTimer = setTimeout(startHomeMusic, (dur - 0.08) * 1000);
+    }
+
+    function stopHomeMusic() {
+      if (homeMusicTimer) { clearTimeout(homeMusicTimer); homeMusicTimer = null; }
+      stopActiveNodes();
+    }
+
+    function playJingle(notes) {
+      const ctx = getCtx();
+      activeNodes = [];
+      scheduleNotes(notes, ctx.currentTime, 'square', 0.18);
+    }
+
+    function toggleMusic() {
+      musicEnabled = !musicEnabled;
+      document.getElementById('music-toggle-btn').classList.toggle('muted', !musicEnabled);
+      if (musicEnabled) {
+        if (!document.getElementById('setup-screen').hidden) startHomeMusic();
+      } else {
+        stopHomeMusic();
+      }
+    }
+
+    document.getElementById('music-toggle-btn').addEventListener('click', toggleMusic);
+
+    // Unlock AudioContext on first interaction, then start home music
+    document.addEventListener('pointerdown', function unlockAudio() {
+      getCtx();
+      document.removeEventListener('pointerdown', unlockAudio);
+      if (musicEnabled && !document.getElementById('setup-screen').hidden) startHomeMusic();
+    }, { once: true });
 
     document.getElementById('rules-btn').addEventListener('click', () => {
       alert(
