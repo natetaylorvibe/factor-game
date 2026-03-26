@@ -866,15 +866,21 @@
 
       renderAll();
 
-      // Computer auto-collects
+      // Computer auto-collects: think → reveal selections → commit
       if (state.gameMode === 'pvc' && state.collector === 1) {
         state.busy = true;
         renderBanner();
+        // Phase 1: thinking pause
         setTimeout(() => {
           state.selectedFactors = computeAICollect();
           state.busy = false;
-          commitCollecting();
-        }, 900);
+          renderGrid();
+          renderBanner();
+          // Phase 2: show selections briefly before committing
+          setTimeout(() => {
+            commitCollecting();
+          }, 1200);
+        }, 1400);
       }
     }
 
@@ -1047,7 +1053,7 @@
         banner.className = `phase-collecting-p${col + 1}`;
 
         if (state.busy) {
-          action.textContent = 'Computer is collecting…';
+          action.innerHTML = 'Computer is thinking<span class="thinking-dots"><span></span><span></span><span></span></span>';
           detail.textContent = '';
           errorEl.textContent = '';
           tally.textContent = '';
