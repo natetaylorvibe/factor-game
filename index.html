@@ -636,6 +636,119 @@
 
     [hidden] { display: none !important; }
 
+    /* ── Home Scene ── */
+    #home-scene {
+      width: 100%;
+      max-width: 480px;
+      margin-bottom: 16px;
+      background: rgba(0,0,0,0.35);
+      border-radius: 14px;
+      border: 2px solid rgba(255,255,255,0.12);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      gap: 8px;
+    }
+
+    .hs-scanlines {
+      position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 3px,
+        rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px
+      );
+    }
+
+    .hs-hero-wrap {
+      flex-shrink: 0;
+      animation: hsBob 1.8s ease-in-out infinite;
+    }
+
+    .hs-robot-wrap {
+      flex-shrink: 0;
+      animation: hsBob 1.8s ease-in-out infinite;
+      animation-delay: 0.9s;
+    }
+
+    .hs-robot-wrap > div {
+      transform: scaleX(-1);
+    }
+
+    @keyframes hsBob {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-10px); }
+    }
+
+    .hs-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hs-vs {
+      font-family: 'Courier New', monospace;
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: 6px;
+      color: #fbbf24;
+      animation: vsFlicker 4s ease-in-out infinite;
+    }
+
+    @keyframes vsFlicker {
+      0%, 88%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(251,191,36,0.55); }
+      90%  { opacity: 0.5; text-shadow: none; }
+      92%  { opacity: 1; text-shadow: 0 0 10px rgba(251,191,36,0.55); }
+      94%  { opacity: 0.65; }
+      96%  { opacity: 1; }
+    }
+
+    .hs-chips {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .hs-chip {
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      font-weight: 800;
+      padding: 3px 7px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #cbd5e1;
+      animation: chipFloat 2.4s ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+    }
+
+    .hs-chip.p1c { background: rgba(59,130,246,0.22); border-color: rgba(59,130,246,0.4); color: #93c5fd; }
+    .hs-chip.p2c { background: rgba(249,115,22,0.22); border-color: rgba(249,115,22,0.4); color: #fdba74; }
+
+    @keyframes chipFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50%       { transform: translateY(-5px) scale(1.08); }
+    }
+
+    .hs-star {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: #fff;
+      left: var(--x);
+      top: var(--y);
+      animation: starTwinkle 2s ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+    }
+
+    @keyframes starTwinkle {
+      0%, 100% { opacity: 0.15; transform: scale(1); }
+      50%       { opacity: 0.9; transform: scale(1.6); }
+    }
+
     .music-btn {
       position: fixed; top: 12px; right: 12px;
       width: 40px; height: 40px; border-radius: 50%;
@@ -654,6 +767,28 @@
 
   <h1>Factor Game</h1>
   <p class="subtitle">Choose numbers. Collect factors. Outscore your opponent.</p>
+
+  <!-- ── Home Scene ── -->
+  <div id="home-scene">
+    <div class="hs-hero-wrap"><div id="hs-hero"></div></div>
+    <div class="hs-center">
+      <div class="hs-vs">VS</div>
+      <div class="hs-chips">
+        <span class="hs-chip p1c" style="--d:0s">12</span>
+        <span class="hs-chip"     style="--d:0.5s">×</span>
+        <span class="hs-chip p2c" style="--d:1s">6</span>
+        <span class="hs-chip"     style="--d:1.5s">÷</span>
+        <span class="hs-chip p1c" style="--d:2s">4</span>
+      </div>
+    </div>
+    <div class="hs-robot-wrap"><div id="hs-robot"></div></div>
+    <span class="hs-star" style="--x:12%;--y:18%;--d:0s"></span>
+    <span class="hs-star" style="--x:22%;--y:72%;--d:0.7s"></span>
+    <span class="hs-star" style="--x:78%;--y:25%;--d:1.2s"></span>
+    <span class="hs-star" style="--x:88%;--y:68%;--d:0.4s"></span>
+    <span class="hs-star" style="--x:50%;--y:82%;--d:1.7s"></span>
+    <div class="hs-scanlines"></div>
+  </div>
 
   <!-- ── Setup Screen ── -->
   <div id="setup-screen">
@@ -854,6 +989,10 @@
       svg.addEventListener('animationend', () => svg.classList.remove('celebrating'), { once: true });
     }
 
+    // Init home scene sprites
+    document.getElementById('hs-hero').innerHTML  = makeSpriteHTML('hero',  7);
+    document.getElementById('hs-robot').innerHTML = makeSpriteHTML('robot', 7);
+
     // ── Quest config ───────────────────────────────────────────────────────────
 
     const QUEST_LEVELS = [
@@ -1012,6 +1151,7 @@
 
       stopHomeMusic();
 
+      document.getElementById('home-scene').hidden = true;
       document.getElementById('setup-screen').hidden = true;
       document.getElementById('game-screen').hidden = false;
       document.getElementById('result-overlay').hidden = true;
@@ -1311,6 +1451,7 @@
     function goHome() {
       document.getElementById('result-overlay').hidden = true;
       document.getElementById('game-screen').hidden = true;
+      document.getElementById('home-scene').hidden = false;
       document.getElementById('setup-screen').hidden = false;
       if (musicEnabled) startHomeMusic();
       // Reset mode UI to match current selectedMode
