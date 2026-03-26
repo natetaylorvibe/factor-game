@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factor Game</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      min-height: 100vh;
+      color: #1e293b;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    /* ── Setup Screen ── */
+    #setup-screen {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+    }
+
+    .setup-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .form-group { margin-bottom: 20px; }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .grid-size-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .size-spinbox {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .size-spinbox span {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .size-spinbox input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1e293b;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .size-spinbox input[type="number"]:focus { border-color: #6366f1; }
+
+    .grid-size-sep {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #94a3b8;
+      padding-top: 20px;
+    }
+
+    .grid-preview {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #6366f1;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .option-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .option-btn {
+      flex: 1;
+      min-width: 60px;
+      padding: 10px 8px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .option-btn:hover { border-color: #6366f1; background: #eef2ff; }
+    .option-btn.selected { border-color: #6366f1; background: #6366f1; color: #fff; }
+
+    .player-names { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .input-field {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      color: #1e293b;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .input-field:focus { border-color: #6366f1; }
+    .input-field:disabled { background: #f1f5f9; color: #94a3b8; }
+
+    .start-btn {
+      width: 100%;
+      padding: 14px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      margin-top: 8px;
+    }
+
+    .start-btn:hover { background: #4f46e5; transform: translateY(-1px); }
+    .start-btn:active { transform: translateY(0); }
+
+    /* ── Game Screen ── */
+    #game-screen { width: 100%; max-width: 900px; }
+
+    .game-header {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .score-card {
+      background: rgba(255,255,255,0.08);
+      border: 2px solid transparent;
+      border-radius: 14px;
+      padding: 14px 18px;
+      transition: all 0.3s;
+    }
+
+    .score-card.active-p1 {
+      background: rgba(59,130,246,0.15);
+      border-color: #3b82f6;
+      box-shadow: 0 0 20px rgba(59,130,246,0.3);
+    }
+
+    .score-card.active-p2 {
+      background: rgba(249,115,22,0.15);
+      border-color: #f97316;
+      box-shadow: 0 0 20px rgba(249,115,22,0.3);
+    }
+
+    .score-card .player-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .score-card.p1 .player-label { color: #93c5fd; }
+    .score-card.p2 .player-label { color: #fdba74; }
+
+    .score-card .player-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .score-card .player-score {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-top: 4px;
+    }
+
+    .score-card.p1 .player-score { color: #60a5fa; }
+    .score-card.p2 .player-score { color: #fb923c; }
+
+    .turn-indicator { text-align: center; }
+
+    .turn-indicator .turn-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .turn-indicator .turn-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    .turn-indicator .turn-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin: 6px auto 0;
+      animation: pulse 1.2s infinite;
+    }
+
+    .turn-dot.p1-dot { background: #3b82f6; }
+    .turn-dot.p2-dot { background: #f97316; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+
+    /* ── Phase Banner ── */
+    #phase-banner {
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    #phase-banner.phase-picking {
+      background: rgba(99,102,241,0.12);
+      border: 2px solid rgba(99,102,241,0.3);
+    }
+
+    #phase-banner.phase-collecting-p1 {
+      background: rgba(59,130,246,0.15);
+      border: 2px solid #3b82f6;
+    }
+
+    #phase-banner.phase-collecting-p2 {
+      background: rgba(249,115,22,0.15);
+      border: 2px solid #f97316;
+    }
+
+    .banner-text { flex: 1; min-width: 0; }
+
+    .banner-action {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 2px;
+    }
+
+    .phase-picking .banner-action { color: #a5b4fc; }
+    .phase-collecting-p1 .banner-action { color: #93c5fd; }
+    .phase-collecting-p2 .banner-action { color: #fdba74; }
+
+    .banner-detail { font-size: 0.9rem; font-weight: 600; color: #fff; }
+    .banner-tally { font-size: 0.8rem; color: #94a3b8; margin-top: 2px; }
+
+    .banner-error {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fbbf24;
+      margin-top: 4px;
+    }
+
+    .commit-btn {
+      padding: 10px 20px;
+      background: #22c55e;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .commit-btn:hover { background: #16a34a; transform: translateY(-1px); }
+    .commit-btn:active { transform: translateY(0); }
+
+    /* ── Grid ── */
+    .grid-wrapper {
+      background: rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+
+    #grid {
+      display: grid;
+      gap: 3px;
+      justify-content: center;
+    }
+
+    .cell {
+      width: 58px;
+      height: 52px;
+      border-radius: 7px;
+      border: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: default;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
+      position: relative;
+      user-select: none;
+    }
+
+    /* Available — same appearance in both picking and collecting phases */
+    .cell.available {
+      background: #fff;
+      border-color: #cbd5e1;
+      color: #1e293b;
+      cursor: pointer;
+    }
+
+    .cell.available:hover {
+      border-color: #6366f1;
+      background: #eef2ff;
+      transform: scale(1.07);
+      z-index: 10;
+      box-shadow: 0 3px 12px rgba(99,102,241,0.25);
+    }
+
+    /* Collecting phase — player selected this cell */
+    .cell.factor-selected {
+      background: #22c55e;
+      border-color: #16a34a;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .cell.factor-selected:hover {
+      background: #16a34a;
+      transform: scale(1.07);
+      z-index: 10;
+    }
+
+    /* Taken cells */
+    .cell.taken-p1 { background: #2563eb; border-color: #1d4ed8; color: #fff; }
+    .cell.taken-p2 { background: #ea580c; border-color: #c2410c; color: #fff; }
+
+    /* ── Log ── */
+    .log-section {
+      background: rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .log-section::-webkit-scrollbar { width: 4px; }
+    .log-section::-webkit-scrollbar-track { background: transparent; }
+    .log-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+    .log-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .log-entry {
+      font-size: 0.83rem;
+      color: #cbd5e1;
+      padding: 3px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      line-height: 1.4;
+    }
+
+    .log-entry:last-child { border-bottom: none; }
+    .log-entry .p1-text { color: #60a5fa; font-weight: 600; }
+    .log-entry .p2-text { color: #fb923c; font-weight: 600; }
+    .log-entry .num { font-weight: 700; color: #fff; }
+    .log-entry .factor-text { color: #4ade80; font-weight: 600; }
+
+    /* ── Bottom Controls ── */
+    .game-controls { display: flex; gap: 10px; justify-content: center; }
+
+    .ctrl-btn {
+      padding: 10px 22px;
+      border-radius: 10px;
+      border: 2px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.07);
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .ctrl-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+    /* ── End Overlay ── */
+    #end-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 16px;
+    }
+
+    .end-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 36px 40px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+    }
+
+    .end-card .trophy { font-size: 3rem; margin-bottom: 8px; }
+
+    .end-card h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .end-card .end-subtitle {
+      color: #64748b;
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    .end-scores {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .end-score-box { border-radius: 12px; padding: 16px; text-align: center; }
+    .end-score-box.p1 { background: #eff6ff; }
+    .end-score-box.p2 { background: #fff7ed; }
+
+    .end-score-box .esb-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+    }
+
+    .end-score-box.p1 .esb-name { color: #3b82f6; }
+    .end-score-box.p2 .esb-name { color: #f97316; }
+
+    .end-score-box .esb-val { font-size: 2.2rem; font-weight: 800; }
+    .end-score-box.p1 .esb-val { color: #2563eb; }
+    .end-score-box.p2 .esb-val { color: #ea580c; }
+
+    .end-btns { display: flex; gap: 10px; }
+
+    .end-btn-primary {
+      flex: 1; padding: 13px; background: #6366f1; color: #fff;
+      border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background 0.15s;
+    }
+
+    .end-btn-primary:hover { background: #4f46e5; }
+
+    .end-btn-secondary {
+      flex: 1; padding: 13px; background: #f1f5f9; color: #334155;
+      border: none; border-radius: 12px; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+
+    .end-btn-secondary:hover { background: #e2e8f0; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      h1 { font-size: 1.6rem; }
+      .cell { width: 46px; height: 42px; font-size: 0.88rem; }
+      .game-header { gap: 8px; }
+      .score-card { padding: 10px 12px; }
+      .score-card .player-score { font-size: 1.5rem; }
+      #phase-banner { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .commit-btn { width: 100%; }
+    }
+
+    @media (max-width: 400px) {
+      .cell { width: 38px; height: 36px; font-size: 0.8rem; }
+      #grid { gap: 2px; }
+    }
+
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <h1>Factor Game</h1>
+  <p class="subtitle">Choose numbers. Collect factors. Outscore your opponent.</p>
+
+  <!-- ── Setup Screen ── -->
+  <div id="setup-screen">
+    <div class="setup-title">New Game</div>
+
+    <div class="form-group">
+      <div class="form-label">Grid Size <span style="font-weight:400;text-transform:none;font-size:0.8rem">(max 10 × 10 = 100)</span></div>
+      <div class="grid-size-row">
+        <div class="size-spinbox">
+          <span>Rows</span>
+          <input type="number" id="rows-input" min="2" max="10" value="5">
+        </div>
+        <div class="grid-size-sep">×</div>
+        <div class="size-spinbox">
+          <span>Columns</span>
+          <input type="number" id="cols-input" min="2" max="10" value="6">
+        </div>
+      </div>
+      <div class="grid-preview" id="grid-preview">Grid: 5 × 6 = 30 numbers (1 – 30)</div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Game Mode</div>
+      <div class="option-row" id="mode-options">
+        <div class="option-btn selected" data-mode="pvp">Player vs Player</div>
+        <div class="option-btn" data-mode="pvc">Player vs Computer</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Player Names</div>
+      <div class="player-names">
+        <input type="text" class="input-field" id="name-p1" placeholder="Player 1" maxlength="16">
+        <input type="text" class="input-field" id="name-p2" placeholder="Player 2" maxlength="16">
+      </div>
+    </div>
+
+    <button class="start-btn" id="start-btn">Start Game</button>
+  </div>
+
+  <!-- ── Game Screen ── -->
+  <div id="game-screen" hidden>
+    <div class="game-header">
+      <div class="score-card p1" id="score-p1">
+        <div class="player-label">Player 1</div>
+        <div class="player-name" id="name-display-p1">Player 1</div>
+        <div class="player-score" id="score-display-p1">0</div>
+      </div>
+
+      <div class="turn-indicator">
+        <div class="turn-label" id="turn-label">Turn</div>
+        <div class="turn-name" id="turn-name-display">—</div>
+        <div class="turn-dot p1-dot" id="turn-dot"></div>
+      </div>
+
+      <div class="score-card p2" id="score-p2">
+        <div class="player-label">Player 2</div>
+        <div class="player-name" id="name-display-p2">Player 2</div>
+        <div class="player-score" id="score-display-p2">0</div>
+      </div>
+    </div>
+
+    <!-- Phase Banner -->
+    <div id="phase-banner" class="phase-picking">
+      <div class="banner-text">
+        <div class="banner-action" id="banner-action">Pick a number</div>
+        <div class="banner-detail" id="banner-detail"></div>
+        <div class="banner-tally" id="banner-tally"></div>
+        <div class="banner-error" id="banner-error"></div>
+      </div>
+      <button class="commit-btn" id="commit-btn" hidden>Commit</button>
+    </div>
+
+    <div class="grid-wrapper">
+      <div id="grid"></div>
+    </div>
+
+    <div class="log-section">
+      <div class="log-title">Game Log</div>
+      <div id="log-entries"></div>
+    </div>
+
+    <div class="game-controls">
+      <button class="ctrl-btn" id="new-game-btn">New Game</button>
+      <button class="ctrl-btn" id="rules-btn">Rules</button>
+    </div>
+  </div>
+
+  <!-- ── End Overlay ── -->
+  <div id="end-overlay" hidden>
+    <div class="end-card">
+      <div class="trophy" id="end-trophy">🏆</div>
+      <h2 id="end-title">Game Over</h2>
+      <div class="end-subtitle" id="end-subtitle"></div>
+      <div class="end-scores">
+        <div class="end-score-box p1">
+          <div class="esb-name" id="end-name-p1">Player 1</div>
+          <div class="esb-val" id="end-score-p1">0</div>
+        </div>
+        <div class="end-score-box p2">
+          <div class="esb-name" id="end-name-p2">Player 2</div>
+          <div class="esb-val" id="end-score-p2">0</div>
+        </div>
+      </div>
+      <div class="end-btns">
+        <button class="end-btn-primary" id="play-again-btn">Play Again</button>
+        <button class="end-btn-secondary" id="change-settings-btn">Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Math helpers ───────────────────────────────────────────────────────────
+
+    function getProperFactors(n) {
+      if (n <= 1) return [];
+      const f = [1];
+      for (let i = 2; i <= Math.sqrt(n); i++) {
+        if (n % i === 0) {
+          f.push(i);
+          if (i !== n / i) f.push(n / i);
+        }
+      }
+      return f;
+    }
+
+    function isProperFactor(f, n) {
+      return f < n && n % f === 0;
+    }
+
+    // ── State ──────────────────────────────────────────────────────────────────
+
+    const state = {
+      available: new Set(),
+      scores: [0, 0],
+      currentPlayer: 0,
+      phase: 'picking',          // 'picking' | 'collecting'
+      collector: 1,
+      lastPicked: null,
+      pickError: '',
+      selectedFactors: new Set(),
+      playerNames: ['Player 1', 'Player 2'],
+      gameMode: 'pvp',
+      rows: 5,
+      cols: 6,
+      numberOwner: {},           // n -> 0 | 1
+      log: [],
+      gameOver: false,
+      busy: false,
+    };
+
+    // ── Setup ──────────────────────────────────────────────────────────────────
+
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+    function updateGridPreview() {
+      const r = clamp(+document.getElementById('rows-input').value || 5, 2, 10);
+      const c = clamp(+document.getElementById('cols-input').value || 6, 2, 10);
+      document.getElementById('grid-preview').textContent =
+        `Grid: ${r} × ${c} = ${r * c} numbers (1 – ${r * c})`;
+    }
+
+    document.getElementById('rows-input').addEventListener('input', updateGridPreview);
+    document.getElementById('cols-input').addEventListener('input', updateGridPreview);
+
+    let selectedMode = 'pvp';
+
+    document.querySelectorAll('#mode-options .option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#mode-options .option-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedMode = btn.dataset.mode;
+        const p2Input = document.getElementById('name-p2');
+        if (selectedMode === 'pvc') {
+          p2Input.value = 'Computer';
+          p2Input.disabled = true;
+        } else {
+          if (p2Input.value === 'Computer') p2Input.value = '';
+          p2Input.disabled = false;
+        }
+      });
+    });
+
+    document.getElementById('start-btn').addEventListener('click', startGame);
+
+    function startGame() {
+      const rows = clamp(+document.getElementById('rows-input').value || 5, 2, 10);
+      const cols = clamp(+document.getElementById('cols-input').value || 6, 2, 10);
+      const p1 = document.getElementById('name-p1').value.trim() || 'Player 1';
+      const p2 = selectedMode === 'pvc'
+        ? 'Computer'
+        : (document.getElementById('name-p2').value.trim() || 'Player 2');
+
+      Object.assign(state, {
+        rows, cols,
+        gameMode: selectedMode,
+        playerNames: [p1, p2],
+        scores: [0, 0],
+        currentPlayer: 0,
+        phase: 'picking',
+        collector: 1,
+        lastPicked: null,
+        pickError: '',
+        selectedFactors: new Set(),
+        numberOwner: {},
+        log: [],
+        gameOver: false,
+        busy: false,
+      });
+
+      state.available = new Set();
+      for (let i = 1; i <= rows * cols; i++) state.available.add(i);
+
+      document.getElementById('setup-screen').hidden = true;
+      document.getElementById('game-screen').hidden = false;
+      document.getElementById('end-overlay').hidden = true;
+
+      renderAll();
+    }
+
+    // ── Computer AI ────────────────────────────────────────────────────────────
+
+    // Best pick: maximise own number minus available factors the opponent can collect
+    function computeAIPick() {
+      const valid = [...state.available].filter(n => n > 1); // computer won't pick 1 (no value as pick)
+      if (!valid.length) return [...state.available][0] || null;
+
+      let best = null, bestScore = -Infinity;
+      for (const n of valid) {
+        const factorSum = getProperFactors(n)
+          .filter(f => state.available.has(f))
+          .reduce((s, f) => s + f, 0);
+        const score = n - factorSum;
+        if (score > bestScore || (score === bestScore && n > best)) {
+          bestScore = score;
+          best = n;
+        }
+      }
+      return best;
+    }
+
+    // Computer collects all proper factors of lastPicked that are still available
+    function computeAICollect() {
+      return new Set(
+        getProperFactors(state.lastPicked).filter(f => state.available.has(f))
+      );
+    }
+
+    // ── Pick phase ─────────────────────────────────────────────────────────────
+
+    function handlePick(n) {
+      if (state.gameOver || state.busy || state.phase !== 'picking') return;
+      if (!state.available.has(n)) return;
+
+      // Reject pick if no proper factors remain on the board
+      const availableFactors = getProperFactors(n).filter(f => state.available.has(f));
+      if (availableFactors.length === 0) {
+        state.pickError = `There are no remaining factors for ${n}. Please choose another number.`;
+        renderBanner();
+        return;
+      }
+
+      state.pickError = '';
+      const picker = state.currentPlayer;
+      state.scores[picker] += n;
+      state.available.delete(n);
+      state.numberOwner[n] = picker;
+      state.lastPicked = n;
+
+      const pName = state.playerNames[picker];
+      const nextCollector = 1 - picker;
+
+      state.log.unshift(
+        `<span class="${picker === 0 ? 'p1-text' : 'p2-text'}">${pName}</span> chose <span class="num">${n}</span> (+${n} pts). ` +
+        `<span class="${nextCollector === 0 ? 'p1-text' : 'p2-text'}">${state.playerNames[nextCollector]}</span> selects factors…`
+      );
+
+      state.phase = 'collecting';
+      state.collector = nextCollector;
+      state.selectedFactors = new Set();
+
+      renderAll();
+
+      // Computer auto-collects
+      if (state.gameMode === 'pvc' && state.collector === 1) {
+        state.busy = true;
+        renderBanner();
+        setTimeout(() => {
+          state.selectedFactors = computeAICollect();
+          state.busy = false;
+          commitCollecting();
+        }, 900);
+      }
+    }
+
+    // ── Collect phase ──────────────────────────────────────────────────────────
+
+    function handleCollectClick(n) {
+      if (state.gameOver || state.busy || state.phase !== 'collecting') return;
+      if (state.gameMode === 'pvc' && state.collector === 1) return;
+      if (!state.available.has(n)) return;
+
+      // Toggle — only actual proper factors register
+      if (isProperFactor(n, state.lastPicked)) {
+        if (state.selectedFactors.has(n)) {
+          state.selectedFactors.delete(n);
+        } else {
+          state.selectedFactors.add(n);
+        }
+        renderGrid();
+        renderBanner();
+      }
+      // Non-factors: click silently does nothing (no hint)
+    }
+
+    function commitCollecting() {
+      if (state.phase !== 'collecting') return;
+
+      const collector = state.collector;
+      const taken = [...state.selectedFactors].sort((a, b) => a - b);
+      let factorSum = 0;
+
+      for (const f of taken) {
+        // Only score and remove factors that are genuine and still available
+        if (state.available.has(f) && isProperFactor(f, state.lastPicked)) {
+          state.scores[collector] += f;
+          state.available.delete(f);
+          state.numberOwner[f] = collector;
+          factorSum += f;
+        }
+      }
+
+      // Factors NOT selected stay on the board
+
+      if (taken.length > 0) {
+        state.log[0] = state.log[0].replace(
+          /selects factors…$/,
+          `collected: <span class="factor-text">${taken.join(', ')}</span> (+${factorSum} pts).`
+        );
+      } else {
+        state.log[0] = state.log[0].replace(/selects factors…$/, `collected nothing.`);
+      }
+
+      state.phase = 'picking';
+      state.lastPicked = null;
+      state.selectedFactors = new Set();
+
+      // After collecting, the collector becomes the next picker
+      advanceTurn(collector);
+    }
+
+    // ── Turn advancement ───────────────────────────────────────────────────────
+
+    // nextPicker: the player who will pick on the next turn
+    function advanceTurn(nextPicker) {
+      state.currentPlayer = nextPicker;
+
+      const hasValidPick = [...state.available].some(n =>
+        getProperFactors(n).some(f => state.available.has(f))
+      );
+
+      if (state.available.size === 0 || !hasValidPick) {
+        state.gameOver = true;
+        renderAll();
+        setTimeout(showEndScreen, 500);
+        return;
+      }
+
+      renderAll();
+
+      // Trigger computer pick if it's computer's turn
+      if (!state.gameOver && state.gameMode === 'pvc' && state.currentPlayer === 1) {
+        state.busy = true;
+        renderBanner();
+        setTimeout(() => {
+          const move = computeAIPick();
+          state.busy = false;
+          if (move !== null) {
+            handlePick(move);
+          } else {
+            state.gameOver = true;
+            renderAll();
+            setTimeout(showEndScreen, 300);
+          }
+        }, 750);
+      }
+    }
+
+    // ── Render ─────────────────────────────────────────────────────────────────
+
+    function renderAll() {
+      renderScores();
+      renderTurnIndicator();
+      renderBanner();
+      renderGrid();
+      renderLog();
+    }
+
+    function renderScores() {
+      document.getElementById('name-display-p1').textContent = state.playerNames[0];
+      document.getElementById('name-display-p2').textContent = state.playerNames[1];
+      document.getElementById('score-display-p1').textContent = state.scores[0];
+      document.getElementById('score-display-p2').textContent = state.scores[1];
+
+      const c0 = document.getElementById('score-p1');
+      const c1 = document.getElementById('score-p2');
+      c0.classList.remove('active-p1', 'active-p2');
+      c1.classList.remove('active-p1', 'active-p2');
+      if (!state.gameOver) {
+        const active = state.phase === 'collecting' ? state.collector : state.currentPlayer;
+        if (active === 0) c0.classList.add('active-p1');
+        else c1.classList.add('active-p2');
+      }
+    }
+
+    function renderTurnIndicator() {
+      const dot = document.getElementById('turn-dot');
+      const nameEl = document.getElementById('turn-name-display');
+      const labelEl = document.getElementById('turn-label');
+
+      if (state.gameOver) {
+        labelEl.textContent = 'Final';
+        nameEl.textContent = 'Game Over';
+        dot.className = 'turn-dot';
+        return;
+      }
+
+      if (state.phase === 'collecting') {
+        labelEl.textContent = 'Collecting';
+        nameEl.textContent = state.busy ? 'Thinking…' : state.playerNames[state.collector];
+        dot.className = `turn-dot ${state.collector === 0 ? 'p1-dot' : 'p2-dot'}`;
+      } else {
+        labelEl.textContent = 'Turn';
+        nameEl.textContent = state.busy ? 'Thinking…' : state.playerNames[state.currentPlayer];
+        dot.className = `turn-dot ${state.currentPlayer === 0 ? 'p1-dot' : 'p2-dot'}`;
+      }
+    }
+
+    function renderBanner() {
+      const banner = document.getElementById('phase-banner');
+      const action = document.getElementById('banner-action');
+      const detail = document.getElementById('banner-detail');
+      const tally = document.getElementById('banner-tally');
+      const commitBtn = document.getElementById('commit-btn');
+
+      const errorEl = document.getElementById('banner-error');
+
+      if (state.phase === 'picking') {
+        banner.className = 'phase-picking';
+        action.textContent = state.busy
+          ? 'Computer is thinking…'
+          : `${state.playerNames[state.currentPlayer]}: Choose a number`;
+        detail.textContent = '';
+        tally.textContent = '';
+        errorEl.textContent = state.pickError;
+        commitBtn.hidden = true;
+
+      } else {
+        const col = state.collector;
+        banner.className = `phase-collecting-p${col + 1}`;
+
+        if (state.busy) {
+          action.textContent = 'Computer is collecting…';
+          detail.textContent = '';
+          errorEl.textContent = '';
+          tally.textContent = '';
+          commitBtn.hidden = true;
+        } else {
+          const selSum = [...state.selectedFactors].reduce((s, f) => s + f, 0);
+          action.textContent = `${state.playerNames[col]}: Collect factors of ${state.lastPicked}`;
+          detail.textContent = '';
+          errorEl.textContent = '';
+          tally.textContent = state.selectedFactors.size > 0
+            ? `Selected: ${[...state.selectedFactors].sort((a, b) => a - b).join(', ')} (+${selSum} pts)`
+            : 'No factors selected yet.';
+          commitBtn.hidden = state.gameMode === 'pvc' && col === 1;
+        }
+      }
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('grid');
+      grid.style.gridTemplateColumns = `repeat(${state.cols}, 1fr)`;
+
+      const maxNum = state.rows * state.cols;
+      if (grid.querySelectorAll('.cell').length !== maxNum) {
+        grid.innerHTML = '';
+        for (let n = 1; n <= maxNum; n++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.n = n;
+          cell.addEventListener('click', onCellClick);
+          grid.appendChild(cell);
+        }
+      }
+
+      grid.querySelectorAll('.cell').forEach(cell => updateCell(cell, +cell.dataset.n));
+    }
+
+    function updateCell(cell, n) {
+      cell.className = 'cell';
+
+      if (!state.available.has(n)) {
+        // Number has been taken
+        const owner = state.numberOwner[n];
+        cell.classList.add(owner === 0 ? 'taken-p1' : 'taken-p2');
+      } else if (state.phase === 'collecting' && state.selectedFactors.has(n)) {
+        cell.classList.add('factor-selected');
+      } else {
+        // Available — looks the same whether picking or collecting, no hints
+        cell.classList.add('available');
+      }
+
+      cell.textContent = n;
+    }
+
+    function renderLog() {
+      document.getElementById('log-entries').innerHTML = state.log
+        .slice(0, 20)
+        .map(msg => `<div class="log-entry">${msg}</div>`)
+        .join('');
+    }
+
+    // ── Cell click ─────────────────────────────────────────────────────────────
+
+    function onCellClick(e) {
+      if (state.gameOver || state.busy) return;
+      const n = +e.currentTarget.dataset.n;
+
+      if (state.phase === 'picking') {
+        if (state.gameMode === 'pvc' && state.currentPlayer === 1) return;
+        handlePick(n);
+      } else {
+        if (state.gameMode === 'pvc' && state.collector === 1) return;
+        handleCollectClick(n);
+      }
+    }
+
+    // ── Commit button ──────────────────────────────────────────────────────────
+
+    document.getElementById('commit-btn').addEventListener('click', () => {
+      if (state.phase !== 'collecting' || state.busy) return;
+      if (state.gameMode === 'pvc' && state.collector === 1) return;
+      commitCollecting();
+    });
+
+    // ── End Screen ─────────────────────────────────────────────────────────────
+
+    function showEndScreen() {
+      const [s0, s1] = state.scores;
+      const [n0, n1] = state.playerNames;
+
+      document.getElementById('end-name-p1').textContent = n0;
+      document.getElementById('end-name-p2').textContent = n1;
+      document.getElementById('end-score-p1').textContent = s0;
+      document.getElementById('end-score-p2').textContent = s1;
+
+      let title, subtitle, trophy;
+      if (s0 > s1) {
+        title = `${n0} Wins!`;
+        subtitle = `${n0} wins by ${s0 - s1} point${s0 - s1 !== 1 ? 's' : ''}.`;
+        trophy = '🏆';
+      } else if (s1 > s0) {
+        title = `${n1} Wins!`;
+        subtitle = `${n1} wins by ${s1 - s0} point${s1 - s0 !== 1 ? 's' : ''}.`;
+        trophy = '🏆';
+      } else {
+        title = "It's a Tie!";
+        subtitle = `Both players scored ${s0} points.`;
+        trophy = '🤝';
+      }
+
+      document.getElementById('end-title').textContent = title;
+      document.getElementById('end-subtitle').textContent = subtitle;
+      document.getElementById('end-trophy').textContent = trophy;
+      document.getElementById('end-overlay').hidden = false;
+    }
+
+    // ── Controls ───────────────────────────────────────────────────────────────
+
+    document.getElementById('new-game-btn').addEventListener('click', startGame);
+
+    document.getElementById('rules-btn').addEventListener('click', () => {
+      alert(
+        'FACTOR GAME RULES\n\n' +
+        '1. Players alternate turns. Each round, one player picks a number and the other collects factors.\n' +
+        '2. The picker scores points equal to their chosen number.\n' +
+        '3. The collector then selects whichever numbers on the board they believe are proper factors of that number.\n' +
+        '4. The collector clicks Commit to score and remove their chosen factors. Uncollected factors remain on the board.\n' +
+        '5. Turns alternate: the collector becomes the picker next round.\n' +
+        '6. The game ends when all numbers have been removed from the board.\n' +
+        '7. Highest score wins!'
+      );
+    });
+
+    document.getElementById('play-again-btn').addEventListener('click', () => {
+      document.getElementById('end-overlay').hidden = true;
+      startGame();
+    });
+
+    document.getElementById('change-settings-btn').addEventListener('click', () => {
+      document.getElementById('end-overlay').hidden = true;
+      document.getElementById('game-screen').hidden = true;
+      document.getElementById('setup-screen').hidden = false;
+    });
+  </script>
+</body>
+</html>
