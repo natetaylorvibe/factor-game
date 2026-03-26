@@ -777,9 +777,13 @@
 
     // Best pick: maximise own number minus available factors the opponent can collect
     function computeAIPick() {
-      const valid = [...state.available].filter(n => n > 1); // computer won't pick 1 (no value as pick)
-      if (!valid.length) return [...state.available][0] || null;
+      // Only consider numbers that have at least one proper factor still on the board
+      const valid = [...state.available].filter(n =>
+        getProperFactors(n).some(f => state.available.has(f))
+      );
+      if (!valid.length) return null;
 
+      // Pick the move that maximises (my points) - (opponent's factor haul)
       let best = null, bestScore = -Infinity;
       for (const n of valid) {
         const factorSum = getProperFactors(n)
