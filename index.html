@@ -661,19 +661,84 @@
       );
     }
 
-    .hs-hero-wrap {
+    #hs-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex: 1;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hs-avatar-wrap {
       flex-shrink: 0;
       animation: hsBob 1.8s ease-in-out infinite;
     }
 
-    .hs-robot-wrap {
-      flex-shrink: 0;
-      animation: hsBob 1.8s ease-in-out infinite;
-      animation-delay: 0.9s;
+    .hs-avatar-wrap.hs-delayed { animation-delay: 0.9s; }
+
+    .hs-flip-sprite svg { transform: scaleX(-1); display: block; }
+
+    .hs-quest-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
     }
 
-    .hs-robot-wrap > div {
-      transform: scaleX(-1);
+    .hs-quest-label {
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #fbbf24;
+      animation: vsFlicker 4s ease-in-out infinite;
+    }
+
+    .hs-levels { display: flex; flex-direction: column; gap: 5px; }
+
+    .hs-levels-row { display: flex; align-items: center; gap: 3px; }
+
+    .hs-level-node {
+      width: 22px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Courier New', monospace;
+      font-size: 0.6rem;
+      font-weight: 800;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.28);
+    }
+
+    .hs-level-node.hs-level-start {
+      background: rgba(251,191,36,0.2);
+      border-color: rgba(251,191,36,0.7);
+      color: #fbbf24;
+      animation: levelPulse 1.5s ease-in-out infinite;
+    }
+
+    .hs-level-node.hs-level-done {
+      background: rgba(34,197,94,0.18);
+      border-color: rgba(34,197,94,0.5);
+      color: #4ade80;
+    }
+
+    @keyframes levelPulse {
+      0%, 100% { box-shadow: 0 0 4px rgba(251,191,36,0.4); }
+      50%       { box-shadow: 0 0 10px rgba(251,191,36,0.8); }
+    }
+
+    .hs-level-conn {
+      font-family: 'Courier New', monospace;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.18);
+      line-height: 1;
     }
 
     @keyframes hsBob {
@@ -770,18 +835,7 @@
 
   <!-- ── Home Scene ── -->
   <div id="home-scene">
-    <div class="hs-hero-wrap"><div id="hs-hero"></div></div>
-    <div class="hs-center">
-      <div class="hs-vs">VS</div>
-      <div class="hs-chips">
-        <span class="hs-chip p1c" style="--d:0s">12</span>
-        <span class="hs-chip"     style="--d:0.5s">×</span>
-        <span class="hs-chip p2c" style="--d:1s">6</span>
-        <span class="hs-chip"     style="--d:1.5s">÷</span>
-        <span class="hs-chip p1c" style="--d:2s">4</span>
-      </div>
-    </div>
-    <div class="hs-robot-wrap"><div id="hs-robot"></div></div>
+    <div id="hs-content"></div>
     <span class="hs-star" style="--x:12%;--y:18%;--d:0s"></span>
     <span class="hs-star" style="--x:22%;--y:72%;--d:0.7s"></span>
     <span class="hs-star" style="--x:78%;--y:25%;--d:1.2s"></span>
@@ -960,6 +1014,55 @@
           O: '#fb923c', // glowing eyes
           '.': null,
         }
+      },
+      heroine: {
+        pixels: [
+          '.PPPPPP.',
+          'PPPPPPPP',
+          'P.SSSS.P',
+          'P.eSSe.P',
+          'P.SSSS.P',
+          '..SmSS..',
+          '.VVVVVV.',
+          'VV....VV',
+          '.VVVVVV.',
+          '.KK..KK.',
+        ],
+        palette: {
+          P: '#be185d', // deep rose hair
+          S: '#fed7aa', // skin
+          e: '#1e293b', // eyes
+          m: '#dc2626', // mouth
+          V: '#7c3aed', // violet top
+          K: '#4c1d95', // dark violet boots
+          '.': null,
+        }
+      },
+      questHero: {
+        pixels: [
+          '..BBBB..WW',
+          '.BBBBBB.WW',
+          '.SSSSSS.WW',
+          '.SeSSeS.WW',
+          '.SSSSSS.WW',
+          '..SmSS..WW',
+          '.AAAAAA.XX',
+          'AA....AAHH',
+          '.AAAAAA.H.',
+          '.LL..LL...',
+        ],
+        palette: {
+          B: '#92400e', // brown hair
+          S: '#fed7aa', // skin
+          e: '#1e293b', // eyes
+          m: '#dc2626', // mouth
+          A: '#2563eb', // blue armor
+          L: '#1e3a8a', // dark boots
+          W: '#e2e8f0', // silver blade
+          X: '#fbbf24', // gold crossguard
+          H: '#d97706', // dark gold handle
+          '.': null,
+        }
       }
     };
 
@@ -989,9 +1092,61 @@
       svg.addEventListener('animationend', () => svg.classList.remove('celebrating'), { once: true });
     }
 
-    // Init home scene sprites
-    document.getElementById('hs-hero').innerHTML  = makeSpriteHTML('hero',  7);
-    document.getElementById('hs-robot').innerHTML = makeSpriteHTML('robot', 7);
+    // ── Home scene builders ────────────────────────────────────────────────────
+
+    function buildPvCScene() {
+      return `<div class="hs-avatar-wrap">${makeSpriteHTML('hero', 7)}</div>
+        <div class="hs-center">
+          <div class="hs-vs">VS</div>
+          <div class="hs-chips">
+            <span class="hs-chip p1c" style="--d:0s">12</span>
+            <span class="hs-chip"     style="--d:0.5s">×</span>
+            <span class="hs-chip p2c" style="--d:1s">6</span>
+            <span class="hs-chip"     style="--d:1.5s">÷</span>
+            <span class="hs-chip p1c" style="--d:2s">4</span>
+          </div>
+        </div>
+        <div class="hs-avatar-wrap hs-delayed hs-flip-sprite">${makeSpriteHTML('robot', 7)}</div>`;
+    }
+
+    function buildPvPScene() {
+      return `<div class="hs-avatar-wrap">${makeSpriteHTML('hero', 7)}</div>
+        <div class="hs-center">
+          <div class="hs-vs">VS</div>
+          <div class="hs-chips">
+            <span class="hs-chip p1c" style="--d:0s">P1</span>
+            <span class="hs-chip"     style="--d:0.6s">vs</span>
+            <span class="hs-chip p2c" style="--d:1.2s">P2</span>
+          </div>
+        </div>
+        <div class="hs-avatar-wrap hs-delayed hs-flip-sprite">${makeSpriteHTML('heroine', 7)}</div>`;
+    }
+
+    function buildQuestScene() {
+      const active = (state.gameMode === 'quest') ? state.questLevel : 1;
+      let rows = '';
+      for (let start = 1; start <= 10; start += 5) {
+        rows += '<div class="hs-levels-row">';
+        for (let i = start; i < start + 5; i++) {
+          const cls = i < active ? ' hs-level-done' : i === active ? ' hs-level-start' : '';
+          rows += `<span class="hs-level-node${cls}">${i}</span>`;
+          if (i < start + 4) rows += `<span class="hs-level-conn">—</span>`;
+        }
+        rows += '</div>';
+      }
+      return `<div class="hs-avatar-wrap">${makeSpriteHTML('questHero', 7)}</div>
+        <div class="hs-quest-right">
+          <div class="hs-quest-label">10 LEVELS</div>
+          <div class="hs-levels">${rows}</div>
+        </div>`;
+    }
+
+    function updateHomeScene(mode) {
+      const el = document.getElementById('hs-content');
+      if (mode === 'pvp')        el.innerHTML = buildPvPScene();
+      else if (mode === 'pvc')   el.innerHTML = buildPvCScene();
+      else if (mode === 'quest') el.innerHTML = buildQuestScene();
+    }
 
     // ── Quest config ───────────────────────────────────────────────────────────
 
@@ -1090,8 +1245,11 @@
           startBtn.className = 'start-btn';
           startBtn.textContent = 'Start Game';
         }
+        updateHomeScene(selectedMode);
       });
     });
+
+    updateHomeScene('pvp'); // initial render (pvp is the default selection)
 
     document.getElementById('start-btn').addEventListener('click', () => {
       if (selectedMode === 'quest') {
@@ -1453,6 +1611,7 @@
       document.getElementById('game-screen').hidden = true;
       document.getElementById('home-scene').hidden = false;
       document.getElementById('setup-screen').hidden = false;
+      updateHomeScene(selectedMode);
       if (musicEnabled) startHomeMusic();
       // Reset mode UI to match current selectedMode
       document.querySelectorAll('#mode-options .option-btn').forEach(b => {
